@@ -1,0 +1,58 @@
+# Maven wrapper files (CRITICAL: exclude to force system Maven usage)
+mvnw
+mvnw.cmd
+.mvn/
+
+# Gradle wrapper files
+gradlew
+gradlew.bat
+gradle/wrapper/
+
+# Build output
+target/
+build/
+*.jar
+*.war
+*.ear
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+README*
+LICENSE*
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Test files
+src/test/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore
