@@ -1,0 +1,58 @@
+# AWS ECS Task Definition for Cloud Deployment
+version: '3'
+services:
+  crm-app:
+    image: ${ECR_REGISTRY}/crm-app:latest
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      # Database configuration
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DDL_AUTO: validate
+      DB_POOL_SIZE: 20
+      DB_MIN_IDLE: 5
+      DB_CONNECTION_TIMEOUT: 30000
+
+      # Server configuration
+      PORT: 8080
+      SPRING_PROFILES_ACTIVE: cloud,aws
+
+      # Storage configuration
+      PDF_STORAGE_PATH: /app/storage/pdfs
+      FILE_STORAGE_PATH: /app/storage/files
+
+      # Logging
+      LOG_LEVEL: INFO
+      APP_LOG_LEVEL: INFO
+
+      # Cache configuration
+      THYMELEAF_CACHE: true
+
+    volumes:
+      - efs-storage:/app/storage
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health/liveness"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+volumes:
+  efs-storage:
+    driver: local

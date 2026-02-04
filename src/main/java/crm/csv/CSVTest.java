@@ -1,38 +1,76 @@
 package crm.csv;
 
 import com.opencsv.CSVReader;
-import crm.utils.ReadDataUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CSVTest {
 
+    private static final Logger log = LoggerFactory.getLogger(CSVTest.class);
+
     public static void main(String[] args) {
-        File document = ReadDataUtils.ReadFile("Select CSV file", null, "Only CSV Files", "csv");
-//        System.out.println(document.getName());
+        // Cloud-compatible CSV reading from environment variable or classpath
+        String csvFileName = System.getenv("CSV_FILE_NAME");
+        if (csvFileName == null || csvFileName.isEmpty()) {
+            csvFileName = "data.csv"; // default file name
+        }
 
-        CSVReader reader;
+        List<Object[]> data = processCSVFile(csvFileName);
+        log.info("CSV processing completed. Total records: {}", data.size());
+    }
+
+    public static List<Object[]> processCSVFile(String fileName) {
         List<Object[]> data = new ArrayList<>();
-        try {
-            reader = new CSVReader(new FileReader(document));
-            String[] line;
-            while ((line = reader.readNext()) != null) {
-//                System.out.println(line[1] + "\t" + line[2]);
-                data.add(line);
-                if(line[1].equals("QUICK SUB")){
-                    System.out.println(line[0] + "\t" + line[1] + "\t" + line[2]);
-                }
+        CSVReader reader = null;
 
+        try {
+            // Try reading from classpath (cloud-compatible)
+            InputStream is = CSVTest.class.getClassLoader().getResourceAsStream(fileName);
+            if (is == null) {
+                // Try reading from configured storage path
+                String storagePath = System.getenv("FILE_STORAGE_PATH");
+                if (storagePath != null) {
+                    java.nio.file.Path filePath = java.nio.file.Paths.get(storagePath, fileName);
+                    is = java.nio.file.Files.newInputStream(filePath);
+                }
+            }
+
+            if (is != null) {
+                reader = new CSVReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+                String[] line;
+                while ((line = reader.readNext()) != null) {
+                    data.add(line);
+                    if (line.length > 1 && "QUICK SUB".equals(line[1])) {
+                        log.info("Found QUICK SUB record: {} | {} | {}",
+                                line.length > 0 ? line[0] : "",
+                                line.length > 1 ? line[1] : "",
+                                line.length > 2 ? line[2] : "");
+                    }
+                }
+                log.info("Successfully processed CSV file: {}", fileName);
+            } else {
+                log.error("CSV file not found: {}", fileName);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error processing CSV file: {}", e.getMessage(), e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    log.error("Error closing CSV reader: {}", e.getMessage());
+                }
+            }
         }
-		/*System.out.println(data.get(0)[1] + "\t" + data.get(0)[2]);
-		System.out.println(data.get(1)[1] + "\t" + data.get(1)[2]);*/
+
+        return data;
     }
 
 }
