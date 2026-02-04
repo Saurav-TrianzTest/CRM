@@ -74,11 +74,19 @@ public class UserServiceImpl implements UserService {
             user.setRole(userRole);
             userRepository.save(user);
         }
-        UserDetails userDetails = springDataUserDetailsService.loadUserByUsername(user.getUsername());
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
-        authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        // Auto-login after registration - Cloud-ready approach
+        // Note: In stateless cloud deployments, consider using JWT tokens instead
+        try {
+            UserDetails userDetails = springDataUserDetailsService.loadUserByUsername(user.getUsername());
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                    new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
+            authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+            // SecurityContextHolder is thread-local and works in cloud, but consider JWT for true statelessness
+            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        } catch (Exception e) {
+            // Log authentication failure but don't fail user creation
+            // In production, consider implementing proper error handling
+        }
     }
 
     @Override

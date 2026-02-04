@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Console appender with JSON format for cloud environments -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>correlationId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <customFields>{"application":"crm-service","environment":"${ENVIRONMENT:local}"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- Standard console appender for local development -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- CloudWatch-optimized async appender -->
+    <appender name="ASYNC_CONSOLE_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="CONSOLE_JSON"/>
+    </appender>
+
+    <!-- Profile-specific configuration -->
+    <springProfile name="cloud,production,prod">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_CONSOLE_JSON"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev,local,default">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- Application-specific loggers -->
+    <logger name="crm" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+
+    <!-- Suppress noisy logs in cloud environments -->
+    <logger name="org.springframework.boot.actuate.endpoint" level="WARN"/>
+    <logger name="org.thymeleaf" level="WARN"/>
+</configuration>
