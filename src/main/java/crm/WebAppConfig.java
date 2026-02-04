@@ -48,8 +48,7 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-        configurer.favorPathExtension(false)
-                .ignoreAcceptHeader(false)
+        configurer.ignoreAcceptHeader(false)
                 .defaultContentType(MediaType.APPLICATION_JSON);
 
         final Map<String,MediaType> mediaTypes = new HashMap<>();

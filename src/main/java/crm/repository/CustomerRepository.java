@@ -4,6 +4,7 @@ import crm.entity.Category;
 import crm.entity.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Set;
@@ -49,7 +50,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Iterable<Customer> findByEnabledAndFirstNameAndLastName(int enabled, String firstName, String lastName);
     Iterable<Customer> findByFirstNameAndLastName(String firstName, String lastName);
 
-    Iterable<Customer> findByEnabledAndCategories(int enabled, Set<Category> category);
-    Iterable<Customer> findByCategories(Set<Category> category);
+    @Query("SELECT c FROM Customer c JOIN c.categories cat WHERE c.enabled = :enabled AND cat IN :categories")
+    Iterable<Customer> findByEnabledAndCategories(@Param("enabled") int enabled, @Param("categories") Set<Category> categories);
+
+    @Query("SELECT c FROM Customer c JOIN c.categories cat WHERE cat IN :categories")
+    Iterable<Customer> findByCategories(@Param("categories") Set<Category> categories);
 
 }
