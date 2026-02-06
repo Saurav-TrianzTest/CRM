@@ -1,22 +1,21 @@
 package crm.utils;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 
 public class ReadDataUtils {
 
-    public static File ReadFile(String dialogMEssage, JFrame parent, String fileExtensionDescription,
+    /**
+     * @deprecated This method uses GUI components (JFileChooser) which are not compatible with containerized environments.
+     * For production use, implement file path specification via configuration or environment variables.
+     * This method is retained only for backward compatibility in development/testing scenarios.
+     */
+    @Deprecated
+    public static File ReadFile(String dialogMEssage, java.awt.Component parent, String fileExtensionDescription,
                                 String... fileExtension) {
-        JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(fileExtensionDescription, fileExtension);
-        chooser.setFileFilter(filter);
-        int returnVal = chooser.showOpenDialog(parent);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            System.out.println("You chose to open this file: " + chooser.getSelectedFile().getName());
-            return chooser.getSelectedFile();
-        }
-        return null;
+        throw new UnsupportedOperationException(
+            "GUI file selection is not supported in containerized environments. " +
+            "Please use programmatic file path specification via configuration or environment variables."
+        );
     }
 
 }
