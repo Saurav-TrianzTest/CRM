@@ -19,7 +19,7 @@ import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,8 +45,7 @@ public class WebAppConfig implements WebMvcConfigurer {
 
     @Override
     public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-        configurer.favorPathExtension(false)
-                .ignoreAcceptHeader(false)
+        configurer.ignoreAcceptHeader(false)
                 .defaultContentType(MediaType.APPLICATION_JSON);
 
         final Map<String,MediaType> mediaTypes = new HashMap<>();
@@ -54,7 +53,7 @@ public class WebAppConfig implements WebMvcConfigurer {
         mediaTypes.put("json", MediaType.APPLICATION_JSON);
         mediaTypes.put("xls", MediaType.valueOf("application/vnd.ms-excel"));
         mediaTypes.put("pdf", MediaType.APPLICATION_PDF);
-        mediaTypes.put("csv", new MediaType("text","csv", Charset.forName("utf-8")));
+        mediaTypes.put("csv", new MediaType("text","csv", StandardCharsets.UTF_8));
         configurer.mediaTypes(mediaTypes);
     }
 

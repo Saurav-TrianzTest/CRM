@@ -1,17 +1,37 @@
 package crm.view;
 
 import crm.entity.User;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.springframework.web.servlet.view.document.AbstractXlsView;
+import org.springframework.web.servlet.view.AbstractView;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
-public class ExcelView extends AbstractXlsView{
+public class ExcelView extends AbstractView {
+
+    public ExcelView() {
+        setContentType("application/vnd.ms-excel");
+    }
 
     @Override
+    protected boolean generatesDownloadContent() {
+        return true;
+    }
+
+    @Override
+    protected void renderMergedOutputModel(Map<String, Object> model,
+                                            HttpServletRequest request,
+                                            HttpServletResponse response) throws Exception {
+        Workbook workbook = new HSSFWorkbook();
+        buildExcelDocument(model, workbook, request, response);
+        response.setContentType(getContentType());
+        workbook.write(response.getOutputStream());
+        workbook.close();
+    }
+
     protected void buildExcelDocument(Map<String, Object> model,
                                       Workbook workbook,
                                       HttpServletRequest request,
