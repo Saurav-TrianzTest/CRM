@@ -66,7 +66,8 @@ public class PdfView extends AbstractPdfView {
             table.addCell(user.getLastName());
             table.addCell(user.getUsername());
             table.addCell(user.getEmail());
-            table.addCell(user.getPassword());
+            // SECURITY FIX: Do not expose plaintext passwords in PDF exports
+            table.addCell("********");
             table.addCell(String.valueOf(user.getEnabled()));
             table.addCell(String.valueOf(user.getRole().getId()));
             table.addCell(user.getRole().getName());
