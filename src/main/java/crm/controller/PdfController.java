@@ -13,9 +13,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
 import javax.validation.Valid;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 
 @Controller
 @Slf4j
@@ -27,16 +31,18 @@ public class PdfController {
         this.pdfService = pdfService;
     }
 
-    private void generateSamplePdf(String fileName, String text) throws FileNotFoundException, DocumentException {
+    private byte[] generateSamplePdf(String fileName, String text) throws DocumentException {
         if (!fileName.endsWith(".pdf")) {
             fileName += ".pdf";
         }
         Document document = new Document();
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, outputStream);
         document.open();
         Paragraph paragraph = new Paragraph(text);
         document.add(paragraph);
         document.close();
+        return outputStream.toByteArray();
     }
 
     @GetMapping("/pdf-generator")
@@ -46,19 +52,29 @@ public class PdfController {
     }
 
     @PostMapping("/pdf-generator")
-    public String generatePdf(@Valid Pdf pdf, BindingResult bindingResult) {
+    public ResponseEntity<byte[]> generatePdf(@Valid Pdf pdf, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            return "redirect:/pdf-generator";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         } else {
             try {
-                generateSamplePdf(pdf.getName(), pdf.getContent());
+                byte[] pdfBytes = generateSamplePdf(pdf.getName(), pdf.getContent());
                 pdfService.savePdf(pdf);
-            } catch (FileNotFoundException e) {
-                log.info("File Not Found");
+
+                String fileName = pdf.getName();
+                if (!fileName.endsWith(".pdf")) {
+                    fileName += ".pdf";
+                }
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_PDF);
+                headers.setContentDispositionFormData("attachment", fileName);
+                headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+                return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
             } catch (DocumentException e) {
-                log.info("Document");
+                log.error("Error generating PDF", e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
-            return "pdf/success";
         }
     }
 
