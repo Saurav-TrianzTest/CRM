@@ -2,37 +2,49 @@ package crm.csv;
 
 import com.opencsv.CSVReader;
 import crm.utils.ReadDataUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cloud-native CSV processing utility
+ * Updated to use classpath resources or S3 instead of local file system
+ */
 public class CSVTest {
 
-    public static void main(String[] args) {
-        File document = ReadDataUtils.ReadFile("Select CSV file", null, "Only CSV Files", "csv");
-//        System.out.println(document.getName());
+    private static final Logger log = LoggerFactory.getLogger(CSVTest.class);
 
-        CSVReader reader;
+    public static void main(String[] args) {
+        // For cloud deployment, read from classpath resources or environment variable
+        String csvResourcePath = System.getenv("CSV_FILE_PATH");
+        if (csvResourcePath == null || csvResourcePath.isEmpty()) {
+            csvResourcePath = "sample-data.csv"; // Default classpath resource
+            log.info("No CSV_FILE_PATH environment variable set, using default: {}", csvResourcePath);
+        }
+
         List<Object[]> data = new ArrayList<>();
-        try {
-            reader = new CSVReader(new FileReader(document));
+        try (InputStream inputStream = ReadDataUtils.readFromClasspath(csvResourcePath);
+             CSVReader reader = new CSVReader(new InputStreamReader(inputStream))) {
+
             String[] line;
             while ((line = reader.readNext()) != null) {
-//                System.out.println(line[1] + "\t" + line[2]);
                 data.add(line);
-                if(line[1].equals("QUICK SUB")){
-                    System.out.println(line[0] + "\t" + line[1] + "\t" + line[2]);
+                if (line.length > 1 && line[1].equals("QUICK SUB")) {
+                    log.info("Found QUICK SUB record: {} | {} | {}",
+                            line[0], line[1], line.length > 2 ? line[2] : "N/A");
                 }
-
             }
+            log.info("CSV processing completed. Total records: {}", data.size());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error reading CSV file", e);
+        } catch (IllegalArgumentException e) {
+            log.error("CSV file not found in classpath: {}", csvResourcePath, e);
         }
-		/*System.out.println(data.get(0)[1] + "\t" + data.get(0)[2]);
-		System.out.println(data.get(1)[1] + "\t" + data.get(1)[2]);*/
     }
 
 }
