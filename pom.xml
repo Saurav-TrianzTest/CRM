@@ -112,12 +112,35 @@
             <artifactId>pdfbox</artifactId>
             <version>2.0.8</version>
         </dependency>
+        <!-- AWS SDK for Java v2 - S3 Client for cloud-native storage -->
         <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.59</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.17.100</version>
+        </dependency>
+        <!-- AWS SDK v2 Core -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>core</artifactId>
+            <version>2.17.100</version>
+        </dependency>
+        <!-- AWS SDK v2 Auth -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>2.17.100</version>
+        </dependency>
+        <!-- AWS SDK Core for credentials and region management -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+            <version>2.20.26</version>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>regions</artifactId>
+            <version>2.20.26</version>
+        </dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>4.0</version>
