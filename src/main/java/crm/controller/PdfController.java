@@ -12,14 +12,20 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import javax.validation.Valid;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 
 @Controller
 @Slf4j
 public class PdfController {
+
+    private static final String S3_BUCKET_NAME = System.getenv().getOrDefault("S3_BUCKET_NAME", "crm-pdf-bucket");
+    private static final String AWS_REGION = System.getenv().getOrDefault("AWS_REGION", "us-east-1");
 
     private PdfService pdfService;
 
@@ -27,16 +33,43 @@ public class PdfController {
         this.pdfService = pdfService;
     }
 
-    private void generateSamplePdf(String fileName, String text) throws FileNotFoundException, DocumentException {
+    /**
+     * Generates PDF and stores it in Amazon S3 instead of local file system.
+     * This ensures data durability and availability in cloud environments.
+     */
+    private void generateSamplePdf(String fileName, String text) throws DocumentException {
         if (!fileName.endsWith(".pdf")) {
             fileName += ".pdf";
         }
-        Document document = new Document();
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        document.open();
-        Paragraph paragraph = new Paragraph(text);
-        document.add(paragraph);
-        document.close();
+        
+        try {
+            // Generate PDF in memory instead of writing to local file system
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document document = new Document();
+            PdfWriter.getInstance(document, outputStream);
+            document.open();
+            Paragraph paragraph = new Paragraph(text);
+            document.add(paragraph);
+            document.close();
+
+            // Upload to S3 for durable storage
+            S3Client s3Client = S3Client.builder()
+                    .region(Region.of(AWS_REGION))
+                    .build();
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(S3_BUCKET_NAME)
+                    .key("pdfs/" + fileName)
+                    .contentType("application/pdf")
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(outputStream.toByteArray()));
+            
+            log.info("PDF successfully uploaded to S3: s3://{}/pdfs/{}", S3_BUCKET_NAME, fileName);
+        } catch (Exception e) {
+            log.error("Failed to generate and upload PDF to S3", e);
+            throw new RuntimeException("Failed to store PDF in S3", e);
+        }
     }
 
     @GetMapping("/pdf-generator")
@@ -53,10 +86,10 @@ public class PdfController {
             try {
                 generateSamplePdf(pdf.getName(), pdf.getContent());
                 pdfService.savePdf(pdf);
-            } catch (FileNotFoundException e) {
-                log.info("File Not Found");
             } catch (DocumentException e) {
-                log.info("Document");
+                log.error("Document generation error", e);
+            } catch (Exception e) {
+                log.error("Failed to generate PDF", e);
             }
             return "pdf/success";
         }
