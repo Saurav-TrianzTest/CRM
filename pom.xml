@@ -116,11 +116,23 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.59</version>
-        </dependency>
+        <!-- AWS SDK for S3 (cloud storage) -->
         <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
-            <version>4.0</version>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.1000</version>
+        </dependency>
+        <!-- AWS SDK for Systems Manager (Parameter Store) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ssm</artifactId>
+            <version>1.11.1000</version>
+        </dependency>
+        <!-- AWS SDK Core -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-core</artifactId>
+            <version>1.11.1000</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
