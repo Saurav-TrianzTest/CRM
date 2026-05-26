@@ -124,12 +124,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>3.15</version>
-        </dependency>
+        <!-- AWS SDK for Systems Manager Parameter Store -->
         <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ssm</artifactId>
+            <version>1.11.1000</version>
+        </dependency>
             <version>3.15</version>
         </dependency>
         <dependency>
