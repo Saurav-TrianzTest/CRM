@@ -22,7 +22,22 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
+        <!-- AWS SDK v2 BOM version -->
+        <aws.sdk.version>2.25.40</aws.sdk.version>
     </properties>
+
+    <!-- AWS SDK for Java v2 BOM – manages all SDK module versions consistently -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${aws.sdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -137,6 +152,23 @@
             <artifactId>super-csv</artifactId>
             <version>2.4.0</version>
         </dependency>
+
+        <!-- ============================================================ -->
+        <!-- AWS SDK for Java v2 – Amazon S3 client                       -->
+        <!-- Replaces local file system operations with cloud-native S3   -->
+        <!-- storage (blockers cr-java-0061, cr-java-0062, cr-java-0063)  -->
+        <!-- ============================================================ -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <!-- version managed by the AWS SDK BOM above -->
+        </dependency>
+        <!-- URL connection client required by AWS SDK v2 on Java 8 -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>url-connection-client</artifactId>
+            <!-- version managed by the AWS SDK BOM above -->
+        </dependency>
     </dependencies>
 
     <build>
@@ -156,6 +188,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>
