@@ -7,36 +7,80 @@ import com.itextpdf.text.pdf.PdfWriter;
 import crm.entity.Pdf;
 import crm.service.PdfService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import javax.validation.Valid;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
+/**
+ * Controller for PDF generation.
+ * Local file write operations have been replaced with Amazon S3 uploads
+ * using AWS SDK for Java v2 to ensure durable, cloud-native storage.
+ */
 @Controller
 @Slf4j
 public class PdfController {
 
-    private PdfService pdfService;
+    private final PdfService pdfService;
+    private final S3Client s3Client;
 
-    public PdfController(PdfService pdfService) {
+    @Value("${aws.s3.bucket-name:${AWS_S3_BUCKET_NAME:crm-pdf-storage}}")
+    private String bucketName;
+
+    @Value("${aws.s3.pdf-prefix:pdfs/}")
+    private String pdfPrefix;
+
+    public PdfController(PdfService pdfService, S3Client s3Client) {
         this.pdfService = pdfService;
+        this.s3Client = s3Client;
     }
 
-    private void generateSamplePdf(String fileName, String text) throws FileNotFoundException, DocumentException {
+    /**
+     * Generates a PDF in memory and uploads it directly to Amazon S3,
+     * replacing the previous local FileOutputStream write.
+     *
+     * @param fileName the desired PDF file name (S3 object key suffix)
+     * @param text     the text content to embed in the PDF
+     * @throws DocumentException if iText PDF generation fails
+     * @throws IOException       if byte stream I/O fails
+     */
+    private void generateSamplePdf(String fileName, String text) throws DocumentException, IOException {
         if (!fileName.endsWith(".pdf")) {
             fileName += ".pdf";
         }
+
+        // Generate PDF content in memory (no local file system dependency)
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document document = new Document();
-        PdfWriter.getInstance(document, new FileOutputStream(fileName));
+        PdfWriter.getInstance(document, baos);
         document.open();
         Paragraph paragraph = new Paragraph(text);
         document.add(paragraph);
         document.close();
+
+        // Upload the in-memory PDF bytes directly to Amazon S3
+        String s3Key = pdfPrefix + fileName;
+        byte[] pdfBytes = baos.toByteArray();
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .contentType("application/pdf")
+                .contentLength((long) pdfBytes.length)
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(pdfBytes));
+        log.info("PDF '{}' successfully uploaded to S3 bucket '{}' with key '{}'", fileName, bucketName, s3Key);
     }
 
     @GetMapping("/pdf-generator")
@@ -53,10 +97,12 @@ public class PdfController {
             try {
                 generateSamplePdf(pdf.getName(), pdf.getContent());
                 pdfService.savePdf(pdf);
-            } catch (FileNotFoundException e) {
-                log.info("File Not Found");
             } catch (DocumentException e) {
-                log.info("Document");
+                log.error("PDF document generation failed: {}", e.getMessage());
+            } catch (IOException e) {
+                log.error("I/O error during PDF generation or S3 upload: {}", e.getMessage());
+            } catch (S3Exception e) {
+                log.error("S3 upload failed: {}", e.awsErrorDetails().errorMessage());
             }
             return "pdf/success";
         }
