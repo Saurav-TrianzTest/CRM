@@ -22,6 +22,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
+        <!-- Azure SDK versions -->
+        <azure.storage.blob.version>12.25.1</azure.storage.blob.version>
+        <azure.messaging.servicebus.version>7.15.1</azure.messaging.servicebus.version>
     </properties>
 
     <dependencies>
@@ -136,6 +139,20 @@
             <groupId>net.sf.supercsv</groupId>
             <artifactId>super-csv</artifactId>
             <version>2.4.0</version>
+        </dependency>
+
+        <!-- Azure Blob Storage SDK – replaces local file system operations (blockers 1, 2, 3) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <version>${azure.storage.blob.version}</version>
+        </dependency>
+
+        <!-- Azure Service Bus SDK – replaces java.util.Timer scheduling (blockers 4, 5) -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-messaging-servicebus</artifactId>
+            <version>${azure.messaging.servicebus.version}</version>
         </dependency>
     </dependencies>
 
